@@ -1,0 +1,227 @@
+
+---
+format:
+  revealjs: {theme: solarized, navigation-mode: vertical, transition: slide, background-transition: fade, incremental: true, output-file: llama-revealjs.html}
+code-block-background: true
+include-in-header: {text: '<link rel = "icon" href = "data:," />'}
+
+---
+<style></style><style>.printedClojure .sourceCode {
+  background-color: transparent;
+  border-style: none;
+}
+</style>
+<script src="llama-revealjs_files/md-default0.js" type="text/javascript"></script><script src="llama-revealjs_files/md-default1.js" type="text/javascript"></script>
+
+::: {.sourceClojure}
+```clojure
+(ns llama
+  (:require [com.phronemophobic.llama :as llama]
+            [com.phronemophobic.llama.raw :as raw]
+            [com.phronemophobic.llama.util :as llutil]))
+```
+:::
+
+
+Contexto
+
+
+::: {.sourceClojure}
+```clojure
+(def llama7b-path "models/llama-2-7b-chat.ggmlv3.q4_0.bin")
+```
+:::
+
+
+
+::: {.sourceClojure}
+```clojure
+(def llama-context (llama/create-context llama7b-path {:n-gpu-layers 1}))
+```
+:::
+
+
+
+::: {.sourceClojure}
+```clojure
+(def sentence "One day I would like to code with LLMs")
+```
+:::
+
+
+Tokens
+
+
+::: {.sourceClojure}
+```clojure
+(def tokens
+  (llutil/tokenize llama-context sentence))
+```
+:::
+
+
+
+::: {.sourceClojure}
+```clojure
+(count tokens)
+```
+:::
+
+
+
+::: {.printedClojure}
+```clojure
+11
+
+```
+:::
+
+
+
+::: {.sourceClojure}
+```clojure
+(count sentence)
+```
+:::
+
+
+
+::: {.printedClojure}
+```clojure
+38
+
+```
+:::
+
+
+Decodificar tokens a strings
+
+
+::: {.sourceClojure}
+```clojure
+(mapv #(raw/llama_token_to_str llama-context %)
+      tokens)
+```
+:::
+
+
+
+::: {.printedClojure}
+```clojure
+["One" " day" " I" " would" " like" " to" " code" " with" " L" "LM" "s"]
+
+```
+:::
+
+
+
+::: {.sourceClojure}
+```clojure
+(defonce previous* (atom nil))
+```
+:::
+
+
+https://en.wikipedia.org/wiki/Logit
+
+
+::: {.sourceClojure}
+```clojure
+(def clojure-is-a-logits
+  (get-logits llama-context "Clojure is a"))
+```
+:::
+
+
+
+::: {.sourceClojure}
+```clojure
+(def highest-probability-candidates
+  (->> clojure-is-a-logits
+       ;; keep track of index
+       (map-indexed (fn [idx p]
+                      [idx p]))
+       ;; take the top 10
+       (sort-by second >)
+       (take 10)
+       (map (fn [[idx _p]]
+              (llutil/untokenize llama-context [idx])))))
+```
+:::
+
+
+
+::: {.sourceClojure}
+```clojure
+(def lowest-probability-candidates
+  (->> clojure-is-a-logits
+       ;; keep track of index]
+       (map-indexed (fn [idx p]
+                      [idx p]))
+       ;; take the bottom 10
+       (sort-by second)
+       (take 10)
+       (map (fn [[idx _p]]
+              (llutil/untokenize llama-context [idx])))))
+```
+:::
+
+
+
+::: {.sourceClojure}
+```clojure
+(defn llama2-prompt
+  "Meant to work with llama-2-7b-chat.ggmlv3.q4_0.bin"
+  [prompt]
+  (str
+   "[INST] <<SYS>>
+You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
+
+If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
+<</SYS>>
+
+" prompt " [/INST]
+"))
+```
+:::
+
+
+
+::: {.sourceClojure}
+```clojure
+(def response-tokens
+  (loop [tokens (llutil/tokenize llama-context
+                                 (llama2-prompt "Describe Clojure in one sentence."))]
+    (let [logits (get-logits llama-context tokens)
+          ;; greedy sampling
+          token (->> logits
+                     (map-indexed (fn [idx p]
+                                    [idx p]))
+                     (apply max-key second)
+                     first)]
+      (if (= token (llama/eos))
+        tokens
+        (recur (conj tokens token))))))
+```
+:::
+
+
+
+::: {.sourceClojure}
+```clojure
+(def response
+  (llutil/untokenize llama-context response-tokens))
+```
+:::
+
+
+
+```{=html}
+<div style="background-color:grey;height:2px;width:100%;"></div>
+```
+
+
+
+```{=html}
+<div></div>
+```

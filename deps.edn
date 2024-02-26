@@ -1,0 +1,11 @@
+{:deps {com.phronemophobic/llama-clj {:mvn/version "0.8"}
+        ;; com.phronemophobic/llama-clj
+        ;; {:git/url "https://github.com/phronmophobic/llama.clj"
+        ;;  :git/sha "25990a63f6e9973630ad81086ec1775f3162fbc3"}
+        ;; com.phronemophobic.cljonda/llama-cpp-gguf-darwin-aarch64 {:mvn/version "c3f197912f1ce858ac114d70c40db512de02e2e0"}
+        org.scicloj/clay {:mvn/version "2-alpha81"} org.scicloj/kindly {:mvn/version "4-alpha16"} org.scicloj/kind-portal {:mvn/version "1-alpha11"}}
+ :aliases {
+           :cider {
+                   :jvm-opts ["-Djna.library.path=/Users/kyle/src/github.com/ggerganov/llama.cpp/build/"]
+                   :extra-deps {cider/cider-nrepl {:mvn/version "0.45.0"}}
+                   :main-opts ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]"]}}}
