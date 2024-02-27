@@ -171,7 +171,7 @@ If a question does not make any sense, or is not factually coherent, explain why
 " prompt " [/INST]
 "))
 
-(defonce response-tokens
+(def response-tokens
   (loop [tokens (llutil/tokenize llama-context
                                  (llama2-prompt "Describe three ways programmers use LLMs"))]
     (let [logits (get-logits llama-context tokens)
@@ -182,7 +182,7 @@ If a question does not make any sense, or is not factually coherent, explain why
                      (apply max-key second)
                      first)]
       (if (= token (llama/eos))
-        token
+        tokens
         (recur (conj tokens token))))))
 
 (def response
